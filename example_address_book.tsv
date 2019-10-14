@@ -1,0 +1,5 @@
+email	name	favorite_ml_algorithm
+marek@send_emails.py	Marek	LR
+kamil@send_emails.py	Kamil	k-NN
+michal@send_emails.py	Michał	CNN
+aleksander@send_emails.py	Aleksander	GAN
