@@ -15,9 +15,9 @@ Options:
                                 'email'.  [required]
   -d, --delimiter TEXT          Delimiter for address book file (default =
                                 '\t')
-  -h, --host TEXT               SMPT host.  [required]
-  -l, --login TEXT              SMPT login.  [required]
-  -p, --password TEXT           SMPT password.  [required]
-  -P, --port INTEGER            SMPT port (default = 587).
+  -h, --host TEXT               SMTP host.  [required]
+  -l, --login TEXT              SMTP login.  [required]
+  -p, --password TEXT           SMTP password.  [required]
+  -P, --port INTEGER            SMTP port (default = 587).
   --help                        Show this message and exit.
 ```
