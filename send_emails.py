@@ -66,10 +66,10 @@ def compose_msg(adress, content):
     default="\t",
     help="Delimiter for address book file (default = '\\t') ",
 )
-@click.option("-h", "--host", type=str, required=True, help="SMPT host.")
-@click.option("-l", "--login", type=str, required=True, help="SMPT login.")
-@click.option("-p", "--password", type=str, required=True, help="SMPT password.")
-@click.option("-P", "--port", type=int, default=587, help="SMPT port (default = 587).")
+@click.option("-h", "--host", type=str, required=True, help="SMTP host.")
+@click.option("-l", "--login", type=str, required=True, help="SMTP login.")
+@click.option("-p", "--password", type=str, required=True, help="SMTP password.")
+@click.option("-P", "--port", type=int, default=587, help="SMTP port (default = 587).")
 def send_mails(
     host: str,
     login: str,
