@@ -1,6 +1,6 @@
-# `send_email.py`
+# `send_emails.py`
 
-`send_email.py` is a simple script for sending emails developed as a helper tool for ML in PL Conference 2019 (https://conference.mlinpl.org).
+`send_emails.py` is a simple script for sending emails developed as a helper tool for ML in PL Conference 2019 (https://conference.mlinpl.org).
 
 ## Usage
 ```

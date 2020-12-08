@@ -13,6 +13,7 @@ import json
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from time import sleep
 
 
 def login_to_SMTP(host, login, password, port=587):
@@ -78,6 +79,8 @@ def compose_msg(address, content):
     default=None,
     help="Send all messages to the specified email.",
 )
+@click.option("-b", "--batchsize", type=int, default=10, help="Size of email batches (default 10)")
+@click.option("-s", "--sleeptime", type=int, default=0, help="Sleep interval between sending email batches (default 0)")
 def send_mails(
     host: str,
     login: str,
@@ -87,6 +90,8 @@ def send_mails(
     address_book_path: str,
     delimiter: str,
     email: str,
+    batchsize: int,
+    sleeptime: int,
 ):
     with open(content_path, "r", encoding="utf-8") as content_file:
         if content_path.endswith(".yaml"):
@@ -97,10 +102,14 @@ def send_mails(
     with open(address_book_path, "r", encoding="utf-8") as addressees_file:
         addressees_reader = csv.DictReader(addressees_file, delimiter=delimiter)
         server = login_to_SMTP(host, login, password, port=port)
-        for address in addressees_reader:
+        for i, address in enumerate(addressees_reader):
             if email and len(email) > 0:
                 address["email"] = email
             send_mail(server, compose_msg(address, content))
+
+            if sleeptime > 0 and i > 0 and i % batchsize == 0:
+                print("Sent {} messages, waiting {} seconds ...".format(batchsize, sleeptime))
+                sleep(sleeptime)
 
         server.quit()
 
