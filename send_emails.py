@@ -8,9 +8,10 @@ Copyright (c) 2019-2021 Marek Wydmuch
 
 import click
 import csv
-import yaml
 import json
+import re
 import smtplib
+import yaml
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from time import sleep
@@ -25,23 +26,37 @@ def login_to_SMTP(host, login, password, port=587):
 
 
 def send_mail(server, msg):
-    server.sendmail(msg["From"], msg["To"], msg.as_string())
+    for to in msg["To"].split(","):
+        to = to.strip()
+        server.sendmail(msg["From"], to, msg.as_string())
     print("Successfully sent email to:", msg["To"])
 
 
-def compose_msg(template, address):
+def get_msg_part(template, part, format_template=True, address=None):
+    if format_template and address:
+        msg_part = MIMEText(template[part].format(**address), part)
+    else:
+        msg_part = MIMEText(template[part], part)
+    return msg_part
+
+
+def compose_msg(template, address, format_template=True, plain_from_html=True):
     msg = MIMEMultipart("alternative")
 
     msg["From"] = template["from"]
     msg["To"] = address["email"]
-    msg["Subject"] = template["subject"].format(**address)
+    msg["Subject"] = template["subject"].format(**address) if format_template else template["subject"]
 
     msg.add_header("template-Type", "text/html")
 
-    part1 = MIMEText(template["plain"].format(**address), "plain")
-    part2 = MIMEText(template["html"].format(**address), "html")
-    msg.attach(part1)
-    msg.attach(part2)
+    if "html" in template:
+        msg.attach(get_msg_part(template, "html", format_template=format_template, address=address))
+        if plain_from_html and "plain" not in template:
+            template["plain"] = re.sub('<[^<]+?>', '', template["html"])  # Remove HTML tags
+            template["plain"] = re.sub('<[^<]+?>', '', template["html"])  # Remove HTML tags
+
+    if "plain" in template:
+        msg.attach(get_msg_part(template, "plain", format_template=format_template, address=address))
 
     return msg
 
@@ -81,6 +96,23 @@ def compose_msg(template, address):
 )
 @click.option("-b", "--batchsize", type=int, default=10, help="Size of email batches.", show_default=True)
 @click.option("-s", "--sleeptime", type=int, default=0, help="Sleep interval between sending email batches.", show_default=True)
+@click.option(
+    "-f",
+    "--format_template",
+    type=bool,
+    default=True,
+    help="Format 'title'/'html'/'plain' fields of template with fields from address book.",
+    show_default=True
+)
+@click.option(
+    "-H",
+    "--plain_from_html",
+    type=bool,
+    default=False,
+    help="If no 'plain' field in template, generate it from 'html' field.",
+    show_default=True
+)
+@click.option("-S", "--skip", type=int, default=0, help="Number of address book records to skip.", show_default=True)
 def send_mails(
     host: str,
     login: str,
@@ -92,6 +124,9 @@ def send_mails(
     email: str,
     batchsize: int,
     sleeptime: int,
+    format_template: bool,
+    plain_from_html: bool,
+    skip: int,
 ):
     with open(template_path, "r", encoding="utf-8") as template_file:
         if template_path.endswith(".yaml"):
@@ -105,7 +140,12 @@ def send_mails(
         for i, address in enumerate(addressees_reader):
             if email and len(email) > 0:
                 address["email"] = email
-            send_mail(server, compose_msg(template, address))
+
+            if i < skip:
+                print("Skipped sending to {}".format(address["email"]))
+                continue
+
+            send_mail(server, compose_msg(template, address, format_template=format_template, plain_from_html=plain_from_html))
 
             if sleeptime > 0 and i > 0 and i % batchsize == 0:
                 print("Sent {} messages, waiting {} seconds ...".format(batchsize, sleeptime))
